@@ -98,10 +98,10 @@ print("\n")
 EXTENSION = prompt("Choose Your Language: ", completer=completer).lower()
 
 # Define the URL of the remote file
-url = "https://github.com/ElMehdi-Chbani/Reverse-Shells/raw/main/reverse-shell.php"
-url1 = "https://github.com/ElMehdi-Chbani/Reverse-Shells/raw/main/Shell.groovy"
-url2 = "https://github.com/ElMehdi-Chbani/Reverse-Shells/blob/main/node.js"
-url3 = "https://github.com/ElMehdi-Chbani/Reverse-Shells/raw/main/shell.java"
+url = "https://github.com/HIJACKED1/Reverse-Shells/raw/main/reverse-shell.php"
+url1 = "https://github.com/HIJACKED1/Reverse-Shells/raw/main/Shell.groovy"
+url2 = "https://github.com/HIJACKED1/Reverse-Shells/blob/main/node.js"
+url3 = "https://github.com/HIJACKED1/Reverse-Shells/raw/main/shell.java"
 
 # Define a dictionary for different shell commands
 shell_commands = {
