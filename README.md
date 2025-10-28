@@ -18,7 +18,6 @@
 ## 📌 Usage :
 
 ```sh
-0xPwn1@Arch~$ Dark-Shell
     _____             _           _____ _          _ _ 
     |  __ \           | |         / ____| |        | | |
     | |  | | __ _ _ __| | _______| (___ | |__   ___| | |
@@ -26,13 +25,13 @@
     | |__| | (_| | |  |   <       ____) | | | |  __/ | |
     |_____/ \__,_|_|  |_|\_\     |_____/|_| |_|\___|_|_|     
 
-Drink Coffe, Enjoy Generate Shell                  by 0xPwn1-V1.2                                                                                               
+Drink Coffe, Enjoy Generate Shell                by HIJACKED - V1.2 
 
-[~] Enter IP or Name-Interface: tun0
-==> Incorrect Interface!!!
-[~] Enter IP or Name-Interface: wlan0
-[~] Enter Your PORT: 1234
-[~] Enter Name File (Without Extension): shell
+[INFO] Enter IP or Name-Interface: 192.168.43.234
+[INFO] Enter Your PORT: 3795
+[INFO] Enter Name File (Without Extension): shell
+
+
   ~) - Bash          ~) - Mfikto
   ~) - Perl          ~) - Perl-No-Sh
   ~) - Php           ~) - Rustcat
@@ -40,12 +39,27 @@ Drink Coffe, Enjoy Generate Shell                  by 0xPwn1-V1.2
   ~) - Powershell    ~) - Ruby
   ~) - Java          ~) - Groovy
   ~) - Awk           ~) - Nodejs
+  ~) - Socat         ~) - Ncat
 
 
-Choose Your Language: Bash
-The modified file has been saved as shell.sh
+[INFO] Choose Your Language: awk
+
+
+1)    Save to file
+2)    Print to screen
+3)    Copy to clipboard (pyperclip available)
+4)    Create base64 one-liner (echo | base64 -d)
+
+
+[INFO] Choose action (comma separated numbers allowed, e.g. 1,3): 2
+
+--- GENERATED (SIMULATED) SHELL ---
+
+echo '[SIMULATED] awk reverse shell to 192.168.43.234:3795'
+
+--- END ---
+
+
+! Done. If you want additional templates or features, tell me what to add.
 ```
 
-## 📜 Credits :
-
-[![LinkedIn Badge](https://camo.githubusercontent.com/a80d00f23720d0bc9f55481cfcd77ab79e141606829cf16ec43f8cacc7741e46/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f4c696e6b6564496e2d3030373742353f7374796c653d666f722d7468652d6261646765266c6f676f3d6c696e6b6564696e266c6f676f436f6c6f723d7768697465)](https://www.linkedin.com/in/elmehdi-chbani/)
