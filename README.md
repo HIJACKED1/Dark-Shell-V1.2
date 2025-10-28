@@ -1,7 +1,7 @@
 # Dark-Shell: V1
 ---
 <p align="center">
-<img src="logo.png" alt="center" style="width:600px; height:200px"/>
+<img src="logo.png" alt="center" style="width:600px; height:600px"/>
 </p>
 "Dark-Shell" is a versatile and user-friendly penetration testing tool designed to simplify the process of generating Reverse Shells for ethical hacking and security testing purposes. With "Dark-Shell," users can effortlessly create customized Reverse Shells by providing essential parameters such as IP address, port number, output file name, and preferred programming language.
 ---
